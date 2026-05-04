@@ -18,11 +18,11 @@ all: ${TARGETS}
 
 seq:
 	@mkdir -p $(BIN_DIR)
-	$(CC) $(CFLAGS) $(SRC_FILES_SEQ) -o $(BIN_DIR)/gol_seq && ./$(BIN_DIR)/gol_seq
+	$(CC) $(CFLAGS) $(SRC_FILES_SEQ) -o $(BIN_DIR)/gol_seq
 
 mpi:
 	@mkdir -p $(BIN_DIR)
-	$(MPICC) $(CFLAGS) $(SRC_FILES_MPI) -o $(BIN_DIR)/gol_mpi && ./$(BIN_DIR)/gol_mpi
+	$(MPICC) $(CFLAGS) $(SRC_FILES_MPI) -o $(BIN_DIR)/gol_mpi
 
 clean:
 	rm -rf $(BIN_DIR)/*
