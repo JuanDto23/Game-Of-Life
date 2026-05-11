@@ -22,9 +22,11 @@ unsigned char* read_pbm(const char* file_name, int* width, int* height)
 
   fscanf(f, "%d %d", width, height);
 
-  // 7 bits (or cells) are added in total_bytes guaranteeing to reserve an aditional byte in those cases where the grid dimensions are not a multiple of 8.
-  size_t total_cells = (*width) * (*height);
-  size_t total_bytes = (total_cells + 7) / 8;
+  // 7 bits (or cells) are added for guaranteeing to reserve an aditional byte in those cases where the width is not a multiple of 8.
+  size_t bytes_per_row = ((*width) + 7) / 8;
+
+  // Total bytes of the grid.
+  size_t total_bytes = bytes_per_row * (*height);
   
   unsigned char* grid = (unsigned char*) calloc(total_bytes, sizeof(unsigned char));
   if (!grid) {
@@ -33,12 +35,15 @@ unsigned char* read_pbm(const char* file_name, int* width, int* height)
     return NULL;
   }
 
+  // Total bits per row.
+  size_t bits_per_row = bytes_per_row * 8;
+
   int pixel;
   for (int y = 0; y < *height; y++) {
     for (int x = 0; x < *width; x++) {
       fscanf(f, "%d", &pixel);
       if (pixel == 1) {
-        SET_BIT(grid, x, y, *width);
+        SET_BIT(grid, x, y, bits_per_row);
       }
     }
   }
@@ -58,9 +63,12 @@ int save_pbm(const char* file_name, const unsigned char* grid, int width, int he
   fprintf(f, "P1\n");
   fprintf(f, "%d %d\n", width, height);
 
+  size_t bytes_per_row = (width + 7) / 8;
+  size_t bits_per_row = bytes_per_row * 8;
+
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {
-      int bit = GET_BIT(grid, x, y, width);
+      int bit = GET_BIT(grid, x, y, bits_per_row);
       fprintf(f, "%d ", bit);
     }
     // A new line is introduced to make it easier to read.

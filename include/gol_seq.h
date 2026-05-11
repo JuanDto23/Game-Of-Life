@@ -10,7 +10,7 @@
  * width, height: dimensions of the grid.
 */
 
-// Computes the next generation of the grid based on the Game of Life rules.
+// Computes the next generation of the grid based on the Game of Life rules
 void compute_next_generation(const unsigned char* current_grid, unsigned char* next_grid, int width, int height);
 
 #endif

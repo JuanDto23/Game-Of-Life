@@ -29,7 +29,8 @@ int main(int argc, char* argv[])
   }
 
   // Memory allocation for the next state of the grid.
-  size_t total_bytes = (width * height + 7) / 8;
+  size_t bytes_per_row = (width + 7) / 8;
+  size_t total_bytes = bytes_per_row * height;
   unsigned char* next_grid = (unsigned char*) calloc(total_bytes, sizeof(unsigned char));
   if (!next_grid) {
     fprintf(stderr, "Error: Memory allocation for next_grid failed.\n");
@@ -58,7 +59,7 @@ int main(int argc, char* argv[])
   double time_elapsed = (finish.tv_sec - start.tv_sec) + 
                         (finish.tv_usec - start.tv_usec) / 1000000.0;
 
-  // Metrics
+  // Metrics.
   if (save_pbm(output_file, current_grid, width, height)) {
     printf("========================================\n");
     printf(" Game of Life - Sequential Execution\n");
