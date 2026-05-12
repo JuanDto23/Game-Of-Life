@@ -5,18 +5,17 @@
 
 /* * gol_mpi.h
  * Core logic for Conway's Game of Life (parallel version using MPI).
- * 
- * rank: The ID of the calling process.
- * num_procs: Total number of processes.
- * total_height: Total height of the grid.
 */
 
-// Calculates the number of rows that a specific process should compute.
-// Returns the local height for the calling process (this does not include ghost cells).
-int get_local_height(int rank, int num_procs, int total_height);
+// Computes the initialization of the global grid and domain partitioning among the processes.
+// Returns a pointer to the global grid array.
+unsigned char* init_parallel_grid(const char* input_file, int rank, int num_procs, 
+                                  int* total_width, int* total_height, int* local_height, 
+                                  int* initial_row, unsigned char** local_current, unsigned char** local_next);
 
-// Returns the global row index where the local portion begins.
-int get_initial_row(int rank, int num_procs, int total_height);
+// Computes the data distribution of the global grid among the local grids of the processes.
+void scatter_grid(const unsigned char* global_grid, unsigned char* local_current, int rank, int num_procs, 
+                  int total_width, int total_height, int local_height);
 
 // Computes the next generation for the local portion of the grid.
 //void compute_next_generation(const unsigned char* local_current, unsigned char* local_next, int width, int local_height);
