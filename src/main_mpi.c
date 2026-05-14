@@ -50,7 +50,35 @@ int main(int argc, char* argv[])
   scatter_grid(global_grid, local_current, rank, num_procs, 
                total_width, total_height, local_height);
 
-  // Main loop GoF
+  // Main loop GoF.
+  for (int gen = 0; gen < generations; gen++) {
+    exchange_borders(local_current, total_width, local_height, rank, num_procs);
+
+    compute_next_generation(local_current, local_next, total_width, local_height);
+
+    // Swapping.
+    unsigned char* temp = local_current;
+    local_current = local_next;
+    local_next = temp;
+  }
+
+  // Data gathering.
+  gather_grid(local_current, global_grid, rank, num_procs, total_width, total_height, local_height);
+
+  // Saving and cleaning.
+  if (rank == 0) {
+    if (save_pbm(output_file, global_grid, total_width, total_height)) {
+      printf("========================================\n");
+      printf(" Game of Life - MPI Parallel Execution\n");
+      printf("========================================\n");
+      printf(" Processes        : %d\n", num_procs);
+      printf(" Grid size        : %d x %d\n", total_width, total_height);
+      printf(" Generations      : %d\n", generations);
+      //printf(" Wall-clock time  : %f seconds\n", time_elapsed);
+      printf(" Output saved to  : %s\n", output_file);
+      printf("========================================\n");
+    }
+  }
 
   // Memory deallocation.
   free(local_current);

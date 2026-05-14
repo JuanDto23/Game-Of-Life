@@ -17,7 +17,16 @@ unsigned char* init_parallel_grid(const char* input_file, int rank, int num_proc
 void scatter_grid(const unsigned char* global_grid, unsigned char* local_current, int rank, int num_procs, 
                   int total_width, int total_height, int local_height);
 
+
+// Computes the exchange of ghost rows.
+void exchange_borders(unsigned char* local_current, int total_width, int local_height,
+                      int rank, int num_procs);
+
 // Computes the next generation for the local portion of the grid.
-//void compute_next_generation(const unsigned char* local_current, unsigned char* local_next, int width, int local_height);
+void compute_next_generation(const unsigned char* local_current, unsigned char* local_next, int total_width, int local_height);
+
+// Computes the data gathering of the local grids back into the global grid.
+void gather_grid(const unsigned char* local_current, unsigned char* global_grid, int rank, int num_procs, 
+                 int total_width, int total_height, int local_height);
 
 #endif

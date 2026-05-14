@@ -124,3 +124,136 @@ void scatter_grid(const unsigned char* global_grid, unsigned char* local_current
     free(displs);
   }
 }
+
+void exchange_borders(unsigned char* local_current, int total_width, int local_height,
+                      int rank, int num_procs)
+{    
+  size_t bytes_per_row = (total_width + 7) / 8;
+  // Neighbors identification.
+  // Uses modulo arithmetic to create a logical ring of processes (toroidal topology).
+  int neighbor_up = (rank - 1 + num_procs) % num_procs;
+  int neighbor_down = (rank + 1) % num_procs;
+
+  // Setup pointers for the specific boundaries of the local grid.
+  // The upper ghost row is at index 0.
+  unsigned char* ghost_top = local_current;
+  // The first real row is at index 1.
+  unsigned char* first_real_row = local_current + bytes_per_row;
+  // The last real row is at index 'local_height'.
+  unsigned char* last_real_row = local_current + (local_height * bytes_per_row);
+  // The lower ghost row is at index 'local_height + 1'.
+  unsigned char* ghost_bottom = local_current + ((local_height + 1) * bytes_per_row);
+
+  // Communication UP / Receive from DOWN.
+  // Sends the first real row to the upper neighbor.
+  // Receives the first real row from the lower neighbor into the bottom ghost cell.
+  MPI_Sendrecv(first_real_row, bytes_per_row, MPI_UNSIGNED_CHAR, neighbor_up, 0,
+               ghost_bottom, bytes_per_row, MPI_UNSIGNED_CHAR, neighbor_down, 0,
+               MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+  // Communication DOWN / Receive from UP.
+  // Sends the last real row to the lower neighbor.
+  // Receives the last real row from the upper neighbor into the top ghost cell.
+  MPI_Sendrecv(last_real_row, bytes_per_row, MPI_UNSIGNED_CHAR, neighbor_down, 1,
+               ghost_top, bytes_per_row, MPI_UNSIGNED_CHAR, neighbor_up, 1,
+               MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+}
+
+// Static helper function to count alive neighbors of a cell at (x, y) in the local grid.
+// Periodic (toroidal) boundary condition is used only for the x-axis.
+// The y-axis relies on the exchanged ghost cells.
+static int count_alive_neighbors(const unsigned char* grid, int x, int y, int total_width) 
+{
+  size_t bytes_per_row = (total_width + 7) / 8;
+  size_t bits_per_row = bytes_per_row * 8;
+
+  int alive_neighbors = 0;
+
+  // Iterate through the Moore neighborhood (3x3 grid around the cell).
+  for (int dy = -1; dy <= 1; dy++) {
+    for (int dx = -1; dx <= 1; dx++) {
+      // Skip the central cell.
+      if (dx == 0 && dy == 0) {
+        continue;
+      }
+
+      // X-axis remains toroidal.
+      int neighbor_x = (x + dx + total_width) % total_width;
+      
+      // Y-axis no longer uses modulo. The boundary cell are the ghost cells.
+      int neighbor_y = y + dy;
+
+      // Add the state of the neighbor.
+      alive_neighbors += GET_BIT(grid, neighbor_x, neighbor_y, bits_per_row);
+    }
+  }
+
+  return alive_neighbors;
+}
+
+void compute_next_generation(const unsigned char* local_current, unsigned char* local_next, int total_width, int local_height)
+{
+  size_t bytes_per_row = (total_width + 7) / 8;
+  size_t bits_per_row = bytes_per_row * 8;
+
+  // Iterates only through the real cells assigned to this process.
+  // Row 0 is the top ghost row. Row 'local_height + 1' is the bottom ghost row.
+  for (int y = 1; y <= local_height; y++) {
+    for (int x = 0; x < total_width; x++) {
+      int is_alive = GET_BIT(local_current, x, y, bits_per_row);
+      int alive_neighbors = count_alive_neighbors(local_current, x, y, total_width);
+
+      // Conway's Game of Life rules.
+      if (is_alive) {
+        if (alive_neighbors <= 1 || alive_neighbors >= 4) {
+          CLEAR_BIT(local_next, x, y, bits_per_row);
+        } else {
+          SET_BIT(local_next, x, y, bits_per_row);
+        }
+      } else {
+        if (alive_neighbors == 3) {
+          SET_BIT(local_next, x, y, bits_per_row);
+        } else {
+          CLEAR_BIT(local_next, x, y, bits_per_row);
+        }
+      }
+    }
+  }
+}
+
+void gather_grid(const unsigned char* local_current, unsigned char* global_grid, int rank, int num_procs, 
+                 int total_width, int total_height, int local_height)
+{
+  size_t bytes_per_row = (total_width + 7) / 8;
+  int* recvcounts = NULL;
+  int* displs = NULL;
+
+  if (rank == 0) {
+    recvcounts = (int*) malloc(num_procs * sizeof(int));
+    displs = (int*) malloc(num_procs * sizeof(int));
+
+    for (int i = 0; i < num_procs; i++) {
+      int h = get_local_height(i, num_procs, total_height);
+      int initial = get_initial_row(i, num_procs, total_height);
+
+      recvcounts[i] = bytes_per_row * h;
+      displs[i] = bytes_per_row * initial;
+    }
+  }
+
+  // Calculate the exact amount of real data to send (ignoring ghost cells).
+  int local_send_count = bytes_per_row * local_height;
+
+  // Shift the pointer by 1 row to skip the top ghost cell.
+  const unsigned char* send_buffer_ptr = local_current + bytes_per_row;
+
+  MPI_Gatherv(send_buffer_ptr, local_send_count, MPI_UNSIGNED_CHAR,
+              global_grid, recvcounts, displs, MPI_UNSIGNED_CHAR,
+              0, MPI_COMM_WORLD);
+
+  // Clean up.
+  if (rank == 0) {
+    free(recvcounts);
+    free(displs);
+  }
+}
