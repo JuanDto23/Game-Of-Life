@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/time.h>
 #include "pbm_io.h"
 #include "gol_mpi.h"
 
@@ -50,6 +49,12 @@ int main(int argc, char* argv[])
   scatter_grid(global_grid, local_current, rank, num_procs, 
                total_width, total_height, local_height);
 
+  // Taking timing.
+  double my_start, my_finish, my_elapsed;
+  double global_elapsed;
+  MPI_Barrier(MPI_COMM_WORLD); // Synchronize all processes.
+  my_start = MPI_Wtime(); // Each process takes its initial time.
+
   // Main loop GoF.
   for (int gen = 0; gen < generations; gen++) {
     exchange_borders(local_current, total_width, local_height, rank, num_procs);
@@ -61,6 +66,13 @@ int main(int argc, char* argv[])
     local_current = local_next;
     local_next = temp;
   }
+
+  // Each process takes its final time and calculates its local duration.
+  my_finish = MPI_Wtime();
+  my_elapsed = my_finish - my_start;
+
+  // Takes the max value of my_elapsed variable among all processes and stores the result in global_elapsed variable only in the master node (0).
+  MPI_Reduce(&my_elapsed, &global_elapsed, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
   // Data gathering.
   gather_grid(local_current, global_grid, rank, num_procs, total_width, total_height, local_height);
@@ -74,7 +86,7 @@ int main(int argc, char* argv[])
       printf(" Processes        : %d\n", num_procs);
       printf(" Grid size        : %d x %d\n", total_width, total_height);
       printf(" Generations      : %d\n", generations);
-      //printf(" Wall-clock time  : %f seconds\n", time_elapsed);
+      printf(" Wall-clock time  : %f seconds\n", global_elapsed);
       printf(" Output saved to  : %s\n", output_file);
       printf("========================================\n");
     }
