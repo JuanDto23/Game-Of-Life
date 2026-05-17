@@ -1,6 +1,6 @@
 CC = gcc
 MPICC = mpicc
-CFLAGS = -Wall -I$(INCLUDE_DIR)
+CFLAGS = -g -O2 -Wall -I$(INCLUDE_DIR)
 
 BIN_DIR = bin
 SRC_DIR = src
