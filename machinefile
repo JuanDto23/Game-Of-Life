@@ -1,0 +1,7 @@
+# Template
+# Master node.
+192.168.1.100 slots=4
+# Slave nodes.
+192.168.1.101 slots=2
+192.168.1.102 slots=2
+192.168.1.103 slots=2
