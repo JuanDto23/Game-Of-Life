@@ -1,5 +1,6 @@
 bin/
-data/input_*.pbm
+data/input*.pbm
+data/output*.pbm
 .vscode
 *.o
 *.out
