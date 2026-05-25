@@ -1,10 +1,12 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 USERNAME="juandto"
 
-WORKSPACE="/cluster/"
+WORKSPACE="/home/juandto/Game-Of-Life"
 
-NODES=("148.216.17.80" "148.216.17.81" "148.216.17.85" "148.216.17.87")
+INPUT="input_X.pbm"
+
+NODES=("148.216.17.81" "148.216.17.85" "148.216.17.87")
 
 echo "Starting deploy..."
 
@@ -16,7 +18,7 @@ for NODE in "${NODES[@]}"; do
   scp $WORKSPACE/bin/gol_mpi $NODE:$WORKSPACE/bin/
   
   # Sends the input PBM file.
-  scp $WORKSPACE/data/input_1024.pbm $NODE:$WORKSPACE/data/
+  scp $WORKSPACE/data/$INPUT $NODE:$WORKSPACE/data/
 done
 
 echo "Deploy completed!"

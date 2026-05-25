@@ -9,7 +9,7 @@
  * x, y: logical coordinates of the cell on the grid
  * width: total grid width
  * 
- * index_byte = (y * ancho + x) >> 3 (>> 3 = divide by 8)
+ * index_byte = (y * bits_per_row + x) >> 3 (>> 3 = divide by 8)
  * bit_position = x % 8;
 */
 
