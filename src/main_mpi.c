@@ -55,7 +55,7 @@ int main(int argc, char* argv[])
   MPI_Barrier(MPI_COMM_WORLD); // Synchronize all processes.
   my_start = MPI_Wtime(); // Each process takes its initial time.
 
-  // Main loop GoF.
+  // Main loop GoL.
   for (int gen = 0; gen < generations; gen++) {
     exchange_borders(local_current, total_width, local_height, rank, num_procs);
 
