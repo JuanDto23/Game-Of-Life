@@ -11,7 +11,7 @@
 // Returns a pointer to the global grid array.
 unsigned char* init_parallel_grid(const char* input_file, int rank, int num_procs, 
                                   int* total_width, int* total_height, int* local_height, 
-                                  int* initial_row, unsigned char** local_current, unsigned char** local_next);
+                                  unsigned char** local_current, unsigned char** local_next);
 
 // Computes the data distribution of the global grid among the local grids of the processes.
 void scatter_grid(const unsigned char* global_grid, unsigned char* local_current, int rank, int num_procs, 

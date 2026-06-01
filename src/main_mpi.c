@@ -37,13 +37,12 @@ int main(int argc, char* argv[])
   int total_width = 0;
   int total_height = 0;
   int local_height = 0;
-  int initial_row = 0;
   unsigned char* local_current = NULL;
   unsigned char* local_next = NULL;
 
   unsigned char* global_grid = init_parallel_grid(input_file, rank, num_procs, 
                                                   &total_width, &total_height, &local_height, 
-                                                  &initial_row, &local_current, &local_next);
+                                                  &local_current, &local_next);
 
   // Data distribution of the global grid among processes.
   scatter_grid(global_grid, local_current, rank, num_procs, 

@@ -45,7 +45,7 @@ static int get_initial_row(int rank, int num_procs, int total_height)
 
 unsigned char* init_parallel_grid(const char* input_file, int rank, int num_procs, 
                                   int* total_width, int* total_height, int* local_height, 
-                                  int* initial_row, unsigned char** local_current, unsigned char** local_next)
+                                  unsigned char** local_current, unsigned char** local_next)
 {
   // Only the rank 0 process will use this.
   unsigned char* global_grid = NULL;
@@ -65,7 +65,6 @@ unsigned char* init_parallel_grid(const char* input_file, int rank, int num_proc
 
   // Local partitioning calculations.
   *local_height = get_local_height(rank, num_procs, *total_height);
-  *initial_row = get_initial_row(rank, num_procs, *total_height);
 
   // To each process is added 2 extra rows (one up, one down) for saving the cells of the neighbors. These rows are named "ghost cells".
   int local_height_with_ghosts = *local_height + 2;
